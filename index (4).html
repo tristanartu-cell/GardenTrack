@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2e7d32">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Mon Potager</title>
+<style>
+  :root{
+    --fam-solanacee:#e63946;
+    --fam-pdt:#f4d35e;
+    --fam-alliacee:#457b9d;
+    --fam-divers:#7b2d8e;
+    --fam-cucurbitacee:#e07a2c;
+    --fam-fabacee:#4a934a;
+    --fam-couvert:#a8dadc;
+    --bg:#f7f7f2;
+    --card:#ffffff;
+    --text:#222;
+    --border:#ddd;
+    --accent:#2e7d32;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background:var(--bg);color:var(--text);
+    padding-bottom:60px;
+  }
+  header{
+    background:var(--accent);color:white;padding:10px 14px;
+    display:flex;justify-content:space-between;align-items:center;
+    position:sticky;top:0;z-index:50;
+  }
+  header h1{font-size:1.1rem;margin:0;}
+  header .icons button{
+    background:none;border:none;color:white;font-size:1.1rem;margin-left:8px;cursor:pointer;
+  }
+  nav{
+    display:flex;overflow-x:auto;background:#1b5e20;position:sticky;top:44px;z-index:49;
+  }
+  nav button{
+    flex:1;min-width:90px;background:none;border:none;color:#cde;
+    padding:10px 6px;font-size:0.78rem;cursor:pointer;white-space:nowrap;
+  }
+  nav button.active{background:#2e7d32;color:white;font-weight:bold;border-bottom:3px solid #fff;}
+  .tab{display:none;padding:10px;}
+  .tab.active{display:block;}
+  h2{font-size:1.1rem;margin-top:4px;}
+  h3{font-size:1rem;color:#444;}
+
+  /* Parcellaire */
+  .planche-card{
+    background:var(--card);border-radius:10px;padding:10px 12px;margin-bottom:8px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.12);
+  }
+  .planche-title{display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+  .planche-title strong{font-size:1rem;}
+  .planche-meta{font-size:0.75rem;color:#777;}
+  .culture-item{
+    border-left:4px solid #ccc;padding:6px 8px;margin:6px 0;background:#fafafa;border-radius:6px;font-size:0.85rem;
+  }
+  .culture-item .row{display:flex;justify-content:space-between;}
+  .btn{
+    background:var(--accent);color:white;border:none;padding:8px 12px;border-radius:6px;
+    font-size:0.85rem;cursor:pointer;
+  }
+  .btn.secondary{background:#888;}
+  .btn.danger{background:#c62828;}
+  .btn.small{padding:4px 8px;font-size:0.75rem;}
+  .add-btn{
+    width:100%;padding:10px;background:#e8f5e9;border:2px dashed var(--accent);color:var(--accent);
+    border-radius:8px;font-size:0.9rem;margin-top:6px;cursor:pointer;
+  }
+
+  /* Formulaires / modal */
+  .modal-overlay{
+    display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);
+    z-index:100;align-items:flex-end;justify-content:center;
+  }
+  .modal-overlay.active{display:flex;}
+  .modal{
+    background:white;border-radius:14px 14px 0 0;padding:16px;width:100%;max-width:480px;
+    max-height:88vh;overflow-y:auto;
+  }
+  .modal h3{margin-top:0;}
+  .form-group{margin-bottom:10px;}
+  label{display:block;font-size:0.78rem;color:#555;margin-bottom:3px;}
+  input,select,textarea{
+    width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:0.9rem;
+  }
+  .form-row{display:flex;gap:8px;}
+  .form-row > div{flex:1;}
+  .modal-actions{display:flex;gap:8px;margin-top:14px;}
+  .modal-actions .btn{flex:1;}
+
+  /* Rotation */
+  table.rotation{border-collapse:collapse;width:100%;font-size:0.75rem;}
+  table.rotation th,table.rotation td{
+    border:1px solid var(--border);padding:5px;text-align:center;min-width:70px;
+  }
+  table.rotation th{background:#eee;position:sticky;top:0;}
+  .scroll-x{overflow-x:auto;}
+  .cell-culture{border-radius:4px;padding:2px 4px;font-size:0.7rem;margin-bottom:2px;color:white;}
+
+  /* Récolte */
+  .recolte-item{
+    background:var(--card);padding:8px 10px;border-radius:8px;margin-bottom:6px;
+    display:flex;justify-content:space-between;align-items:center;font-size:0.85rem;
+  }
+  .recolte-item .info{flex:1;}
+  select#recolte-filter{margin-bottom:8px;}
+
+  /* Technico-eco */
+  .stat-card{
+    background:var(--card);border-radius:10px;padding:10px 12px;margin-bottom:8px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.1);
+  }
+  .stat-row{display:flex;justify-content:space-between;font-size:0.85rem;padding:4px 0;border-bottom:1px solid #f0f0f0;}
+  .stat-row:last-child{border-bottom:none;}
+  .toggle-group{display:flex;gap:6px;margin-bottom:10px;}
+  .toggle-group button{
+    flex:1;padding:8px;border:1px solid var(--accent);background:white;color:var(--accent);
+    border-radius:6px;font-size:0.8rem;cursor:pointer;
+  }
+  .toggle-group button.active{background:var(--accent);color:white;}
+  .prix-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+  .prix-row label{flex:1;margin-bottom:0;font-size:0.85rem;}
+  .prix-row input{width:80px;}
+
+  /* Planning */
+  .planning-toolbar{
+    display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center;
+  }
+  .planning-toolbar select{width:auto;flex:0;}
+  .paint-palette{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
+  .paint-swatch{
+    width:34px;height:34px;border-radius:6px;border:2px solid transparent;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;color:white;font-size:0.65rem;font-weight:bold;
+  }
+  .paint-swatch.selected{border-color:#000;}
+  .paint-swatch.eraser{background:white;color:#333;border:1px dashed #999;}
+  .planning-grid-wrap{overflow-x:auto;overflow-y:auto;max-height:70vh;border:1px solid var(--border);}
+  table.planning{border-collapse:collapse;font-size:0.68rem;}
+  table.planning th, table.planning td{
+    border:1px solid #ddd;padding:0;text-align:center;min-width:44px;height:30px;
+  }
+  table.planning th{
+    background:#eee;position:sticky;top:0;z-index:5;font-size:0.65rem;padding:3px;
+  }
+  table.planning td.week-label{
+    position:sticky;left:0;background:#f5f5f5;z-index:4;font-weight:bold;min-width:78px;font-size:0.62rem;
+  }
+  table.planning th.corner{position:sticky;left:0;top:0;z-index:6;background:#ddd;min-width:78px;}
+  table.planning td.cell{cursor:pointer;position:relative;font-weight:bold;}
+  table.planning td.cell .work-label{font-size:0.62rem;display:block;}
+  table.planning td.cell .work-label.planifie{color:#bbb;}
+  table.planning td.cell .work-label.realise{color:#1565c0;}
+
+  .legend{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;font-size:0.72rem;}
+  .legend span{display:flex;align-items:center;gap:4px;}
+  .legend i{width:12px;height:12px;border-radius:3px;display:inline-block;}
+
+  .fab-save{
+    position:fixed;bottom:14px;right:14px;background:var(--accent);color:white;
+    border-radius:50%;width:50px;height:50px;font-size:1.4rem;border:none;box-shadow:0 2px 6px rgba(0,0,0,0.3);
+    z-index:60;
+  }
+  .toast{
+    position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#333;color:white;
+    padding:8px 16px;border-radius:20px;font-size:0.8rem;z-index:200;opacity:0;transition:opacity 0.3s;
+  }
+  .toast.show{opacity:1;}
+  .checklist{display:flex;flex-wrap:wrap;gap:6px;}
+  .checklist label{display:flex;align-items:center;gap:4px;font-size:0.78rem;width:auto;background:#f0f0f0;padding:4px 8px;border-radius:6px;}
+  .checklist input{width:auto;}
+</style>
+
+<link rel="icon" href="icon-192x192.png">
+<link rel="apple-touch-icon" href="icon-192x192.png">
+</head>
+<body>
+
+<header>
+  <h1>🌱 Mon Potager</h1>
+  <div class="icons">
+    <button onclick="exportData()" title="Exporter">⬇️</button>
+    <button onclick="document.getElementById('import-file').click()" title="Importer">⬆️</button>
+  </div>
+</header>
+<input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+
+<nav>
+  <button class="active" data-tab="parcellaire">Parcellaire</button>
+  <button data-tab="rotation">Rotation</button>
+  <button data-tab="recolte">Récolte</button>
+  <button data-tab="technico">Technico-éco</button>
+  <button data-tab="planning">Planning</button>
+</nav>
+
+<!-- ===================== PARCELLAIRE ===================== -->
+<div class="tab active" id="tab-parcellaire">
+  <h2>Parcellaire</h2>
+  <button class="add-btn" onclick="openPlancheForm()">+ Ajouter une planche</button>
+  <div id="planches-list"></div>
+</div>
+
+<!-- ===================== ROTATION ===================== -->
+<div class="tab" id="tab-rotation">
+  <h2>Rotation culturale</h2>
+  <div class="planning-toolbar">
+    <label style="width:auto;margin:0;">Année de départ :</label>
+    <select id="rotation-year-start" onchange="renderRotation()"></select>
+    <label style="width:auto;margin:0;">Nb années :</label>
+    <select id="rotation-year-count" onchange="renderRotation()">
+      <option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option>
+    </select>
+  </div>
+  <div class="scroll-x">
+    <table class="rotation" id="rotation-table"></table>
+  </div>
+</div>
+
+<!-- ===================== RECOLTE ===================== -->
+<div class="tab" id="tab-recolte">
+  <h2>Récoltes</h2>
+  <button class="add-btn" onclick="openRecolteForm()">+ Ajouter une récolte</button>
+  <select id="recolte-filter" onchange="renderRecoltes()">
+    <option value="all">Toutes les années</option>
+  </select>
+  <div id="recoltes-list"></div>
+</div>
+
+<!-- ===================== TECHNICO-ECO ===================== -->
+<div class="tab" id="tab-technico">
+  <h2>Technico-économique</h2>
+  <div class="toggle-group">
+    <button class="active" id="mode-culture" onclick="setRendementMode('culture')">Par culture</button>
+    <button id="mode-planche" onclick="setRendementMode('planche')">Par planche</button>
+  </div>
+  <select id="technico-year" onchange="renderTechnico()" style="margin-bottom:10px;"></select>
+
+  <h3>🌿 Agronomie — Rendements (kg/m²)</h3>
+  <div id="agronomie-list"></div>
+
+  <h3>💶 Économique</h3>
+  <div class="stat-card">
+    <strong>Prix de vente (€/kg)</strong>
+    <div id="prix-list" style="margin-top:8px;"></div>
+  </div>
+  <h3>Valeur totale par culture</h3>
+  <div id="economique-list"></div>
+  <div class="stat-card" id="economique-total"></div>
+</div>
+
+<!-- ===================== PLANNING ===================== -->
+<div class="tab" id="tab-planning">
+  <h2>Planning des travaux</h2>
+  <div class="planning-toolbar">
+    <label style="width:auto;margin:0;">Année :</label>
+    <select id="planning-year" onchange="renderPlanning()"></select>
+    <button class="btn small secondary" onclick="managePlanches()">Gérer planches</button>
+  </div>
+
+  <div style="font-size:0.75rem;margin-bottom:4px;color:#555;">🖌️ Mode peinture : choisis une culture puis touche les cases. Touche longue = travaux.</div>
+  <div class="paint-palette" id="paint-palette"></div>
+
+  <div class="legend" id="planning-legend"></div>
+
+  <div class="planning-grid-wrap" id="planning-grid-wrap"></div>
+</div>
+
+<button class="fab-save" onclick="manualSave()" title="Sauvegarder">💾</button>
+<div class="toast" id="toast"></div>
+
+<!-- ===================== MODALS ===================== -->
+
+<!-- Modal Planche (infos générales) -->
+<div class="modal-overlay" id="modal-planche">
+  <div class="modal">
+    <h3 id="modal-planche-title">Planche</h3>
+    <div class="form-group">
+      <label>Nom de la planche</label>
+      <input type="text" id="pl-nom" placeholder="Ex: Planche 1">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Longueur (m)</label>
+        <input type="number" id="pl-longueur" step="0.1" value="6">
+      </div>
+      <div class="form-group">
+        <label>Largeur (m)</label>
+        <input type="number" id="pl-largeur" step="0.1" value="1">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Nombre de rangs (1 à 5)</label>
+      <input type="number" id="pl-rangs" min="1" max="5" value="1">
+    </div>
+    <div class="modal-actions">
+      <button class="btn secondary" onclick="closeModal('modal-planche')">Annuler</button>
+      <button class="btn" onclick="savePlanche()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Culture (dans une planche) -->
+<div class="modal-overlay" id="modal-culture">
+  <div class="modal">
+    <h3 id="modal-culture-title">Culture</h3>
+    <div class="form-group">
+      <label>Famille</label>
+      <select id="cu-famille" onchange="onFamilleChange()">
+        <option value="solanacee">Solanacées</option>
+        <option value="fabacee">Fabacées</option>
+        <option value="cucurbitacee">Cucurbitacées</option>
+        <option value="alliacee">Alliacées</option>
+        <option value="divers">Divers</option>
+        <option value="couvert">Couvert végétal</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Espèce</label>
+      <input type="text" id="cu-espece" placeholder="Ex: Tomate">
+    </div>
+    <div class="form-group">
+      <label>Variété</label>
+      <input type="text" id="cu-variete" placeholder="Ex: Cœur de bœuf">
+    </div>
+    <div class="form-group" id="cu-composition-group" style="display:none;">
+      <label>Composition du couvert</label>
+      <textarea id="cu-composition" rows="2" placeholder="Ex: Phacélie + Moutarde + Vesce"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Rang concerné</label>
+        <select id="cu-rang"></select>
+      </div>
+      <div class="form-group">
+        <label>Densité semis/plantation</label>
+        <input type="text" id="cu-densite" placeholder="Ex: 40cm x 40cm">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date de plantation/semis</label>
+        <input type="date" id="cu-date-plantation">
+      </div>
+      <div class="form-group">
+        <label>Date de récolte (fin)</label>
+        <input type="date" id="cu-date-recolte">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Précédent cultural</label>
+      <input type="text" id="cu-precedent" placeholder="Ex: Fève 2025">
+    </div>
+    <div class="modal-actions">
+      <button class="btn danger" id="cu-delete-btn" onclick="deleteCulture()" style="display:none;">Supprimer</button>
+      <button class="btn secondary" onclick="closeModal('modal-culture')">Annuler</button>
+      <button class="btn" onclick="saveCulture()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Récolte -->
+<div class="modal-overlay" id="modal-recolte">
+  <div class="modal">
+    <h3>Récolte</h3>
+    <div class="form-group">
+      <label>Planche</label>
+      <select id="re-planche" onchange="fillCultureOptions()"></select>
+    </div>
+    <div class="form-group">
+      <label>Culture</label>
+      <select id="re-culture"></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date de récolte</label>
+        <input type="date" id="re-date">
+      </div>
+      <div class="form-group">
+        <label>Quantité (kg)</label>
+        <input type="number" id="re-qte" step="0.1">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn danger" id="re-delete-btn" onclick="deleteRecolte()" style="display:none;">Supprimer</button>
+      <button class="btn secondary" onclick="closeModal('modal-recolte')">Annuler</button>
+      <button class="btn" onclick="saveRecolte()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Planning Cell -->
+<div class="modal-overlay" id="modal-planning-cell">
+  <div class="modal">
+    <h3 id="pc-title">Semaine</h3>
+    <div class="form-group">
+      <label>Travaux effectués/prévus (max 2)</label>
+      <div class="checklist" id="pc-travaux-list"></div>
+    </div>
+    <div class="form-group">
+      <label>Statut</label>
+      <select id="pc-statut">
+        <option value="planifie">Planifié (gris)</option>
+        <option value="realise">Réalisé (bleu)</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn secondary" onclick="closeModal('modal-planning-cell')">Annuler</button>
+      <button class="btn" onclick="savePlanningCellWork()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal gestion planches (planning) -->
+<div class="modal-overlay" id="modal-manage-planches">
+  <div class="modal">
+    <h3>Planches actives dans le Planning</h3>
+    <div class="checklist" id="manage-planches-list"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('modal-manage-planches')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===================================================================
+   DATA MODEL & PERSISTENCE
+=================================================================== */
+const FAMILLES = {
+  solanacee: {label:'Solanacées', color:'#e63946'},
+  pdt: {label:'Pomme de terre', color:'#f4d35e'},
+  alliacee: {label:'Alliacées', color:'#457b9d'},
+  divers: {label:'Divers', color:'#7b2d8e'},
+  cucurbitacee: {label:'Cucurbitacées', color:'#e07a2c'},
+  fabacee: {label:'Fabacées', color:'#4a934a'},
+  couvert: {label:'Couvert végétal', color:'#a8dadc'}
+};
+const TRAVAUX = {
+  P:'Plantation', B:'Bâche', SR:'Serre', M:'Motoculteur', S:'Semis',
+  R:'Récolte', 'P/T':'Préparation terre', BCH:'Bêchage', F:'Fumier',
+  BR:'Broyage', RL:'Roulage', GR:'Grelinette'
+};
+
+let DB = {
+  planches: [],
+  planning: {}, // key: "plancheId_annee_semaine" => {travaux:[{code,statut}], plancheId, annee, semaine}
+  recoltes: [],
+  prix: {} // key: espece (lowercase) => prix €/kg
+};
+
+function loadDB(){
+  const raw = localStorage.getItem('potager_db');
+  if(raw){
+    try{ DB = JSON.parse(raw); }catch(e){ console.error(e); }
+  } else {
+    seedDefault();
+  }
+  if(!DB.planning) DB.planning = {};
+  if(!DB.recoltes) DB.recoltes = [];
+  if(!DB.prix) DB.prix = {};
+}
+function saveDB(){
+  localStorage.setItem('potager_db', JSON.stringify(DB));
+}
+function manualSave(){
+  saveDB();
+  showToast('Sauvegardé ✔️');
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+function seedDefault(){
+  DB.planches = [];
+  for(let i=1;i<=18;i++){
+    DB.planches.push({
+      id: 'p'+i,
+      nom: 'Planche '+i,
+      longueur: 6,
+      largeur: 1,
+      nbRangs: 1,
+      cultures: []
+    });
+  }
+}
+
+function exportData(){
+  saveDB();
+  const blob = new Blob([JSON.stringify(DB,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'potager_data_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Export effectué');
+}
+function importData(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const parsed = JSON.parse(e.target.result);
+      DB = parsed;
+      if(!DB.planning) DB.planning = {};
+      if(!DB.recoltes) DB.recoltes = [];
+      if(!DB.prix) DB.prix = {};
+      saveDB();
+      showToast('Import réussi ✔️');
+      renderAll();
+    }catch(err){
+      alert('Fichier invalide: '+err);
+    }
+  };
+  reader.readAsText(file);
+  evt.target.value = '';
+}
+
+/* ===================================================================
+   NAVIGATION
+=================================================================== */
+document.querySelectorAll('nav button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+    renderAll();
+  });
+});
+
+function closeModal(id){
+  document.getElementById(id).classList.remove('active');
+}
+function openModal(id){
+  document.getElementById(id).classList.add('active');
+}
+
+/* ===================================================================
+   HELPERS
+=================================================================== */
+function uid(prefix='id'){ return prefix + '_' + Math.random().toString(36).slice(2,9); }
+function getAllYears(){
+  const years = new Set();
+  const now = new Date().getFullYear();
+  for(let y=now-1; y<=now+2; y++) years.add(y);
+  Object.values(DB.planning).forEach(c=>years.add(c.annee));
+  DB.recoltes.forEach(r=>years.add(new Date(r.date).getFullYear()));
+  return Array.from(years).sort();
+}
+function famColor(famille){
+  return FAMILLES[famille] ? FAMILLES[famille].color : '#999';
+}
+function isoWeekToDate(year, week){
+  // Return start date of ISO week
+  const simple = new Date(year, 0, 1 + (week-1)*7);
+  const dow = simple.getDay();
+  const isoStart = new Date(simple);
+  if(dow<=4) isoStart.setDate(simple.getDate() - simple.getDay() + 1);
+  else isoStart.setDate(simple.getDate() + 8 - simple.getDay());
+  return isoStart;
+}
+function fmtDate(d){
+  return d.toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'});
+}
+
+/* ===================================================================
+   PARCELLAIRE
+=================================================================== */
+let currentPlancheId = null;
+let currentCultureId = null;
+
+function renderParcellaire(){
+  const list = document.getElementById('planches-list');
+  list.innerHTML = '';
+  DB.planches.forEach(planche=>{
+    const card = document.createElement('div');
+    card.className = 'planche-card';
+    const surface = (planche.longueur * planche.largeur).toFixed(1);
+    card.innerHTML = `
+      <div class="planche-title" onclick="togglePlancheDetails('${planche.id}')">
+        <div>
+          <strong>${planche.nom}</strong><br>
+          <span class="planche-meta">${planche.longueur}m × ${planche.largeur}m = ${surface}m² • ${planche.nbRangs} rang(s)</span>
+        </div>
+        <div>
+          <button class="btn small secondary" onclick="event.stopPropagation();openPlancheForm('${planche.id}')">✏️</button>
+          <button class="btn small danger" onclick="event.stopPropagation();deletePlanche('${planche.id}')">🗑️</button>
+        </div>
+      </div>
+      <div id="details-${planche.id}" style="display:none;margin-top:8px;">
+        <div id="cultures-${planche.id}"></div>
+        <button class="add-btn" onclick="openCultureForm('${planche.id}')">+ Ajouter une culture</button>
+      </div>
+    `;
+    list.appendChild(card);
+    renderCulturesForPlanche(planche);
+  });
+}
+
+function togglePlancheDetails(id){
+  const el = document.getElementById('details-'+id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function renderCulturesForPlanche(planche){
+  const container = document.getElementById('cultures-'+planche.id);
+  if(!container) return;
+  container.innerHTML = '';
+  if(!planche.cultures || planche.cultures.length===0){
+    container.innerHTML = '<div style="font-size:0.8rem;color:#999;">Aucune culture enregistrée</div>';
+    return;
+  }
+  planche.cultures.slice().sort((a,b)=>(a.rang||0)-(b.rang||0)).forEach(c=>{
+    const div = document.createElement('div');
+    div.className = 'culture-item';
+    div.style.borderLeftColor = famColor(c.famille);
+    div.onclick = ()=>openCultureForm(planche.id, c.id);
+    div.innerHTML = `
+      <div class="row"><strong>${c.espece || '(espèce ?)'}${c.variete? ' - '+c.variete:''}</strong><span>Rang ${c.rang || '-'}</span></div>
+      <div style="color:#666;">${FAMILLES[c.famille]?.label || c.famille}
+        ${c.datePlantation? ' • Sem: '+c.datePlantation : ''}
+        ${c.dateRecolte? ' → '+c.dateRecolte : ''}</div>
+      ${c.composition ? '<div style="color:#888;font-size:0.78rem;">Composition: '+c.composition+'</div>' : ''}
+    `;
+    container.appendChild(div);
+  });
+}
+
+function openPlancheForm(id){
+  currentPlancheId = id || null;
+  if(id){
+    const p = DB.planches.find(x=>x.id===id);
+    document.getElementById('modal-planche-title').textContent = 'Modifier: '+p.nom;
+    document.getElementById('pl-nom').value = p.nom;
+    document.getElementById('pl-longueur').value = p.longueur;
+    document.getElementById('pl-largeur').value = p.largeur;
+    document.getElementById('pl-rangs').value = p.nbRangs;
+  } else {
+    document.getElementById('modal-planche-title').textContent = 'Nouvelle planche';
+    document.getElementById('pl-nom').value = 'Planche ' + (DB.planches.length+1);
+    document.getElementById('pl-longueur').value = 6;
+    document.getElementById('pl-largeur').value = 1;
+    document.getElementById('pl-rangs').value = 1;
+  }
+  openModal('modal-planche');
+}
+function savePlanche(){
+  const nom = document.getElementById('pl-nom').value.trim() || 'Planche';
+  const longueur = parseFloat(document.getElementById('pl-longueur').value) || 6;
+  const largeur = parseFloat(document.getElementById('pl-largeur').value) || 1;
+  const nbRangs = Math.min(5, Math.max(1, parseInt(document.getElementById('pl-rangs').value) || 1));
+
+  if(currentPlancheId){
+    const p = DB.planches.find(x=>x.id===currentPlancheId);
+    p.nom = nom; p.longueur = longueur; p.largeur = largeur; p.nbRangs = nbRangs;
+  } else {
+    DB.planches.push({id: uid('pl'), nom, longueur, largeur, nbRangs, cultures:[]});
+  }
+  saveDB();
+  closeModal('modal-planche');
+  renderParcellaire();
+}
+function deletePlanche(id){
+  if(!confirm('Supprimer cette planche et toutes ses données associées ?')) return;
+  DB.planches = DB.planches.filter(p=>p.id!==id);
+  Object.keys(DB.planning).forEach(k=>{ if(DB.planning[k].plancheId===id) delete DB.planning[k]; });
+  DB.recoltes = DB.recoltes.filter(r=>r.plancheId!==id);
+  saveDB();
+  renderParcellaire();
+}
+
+function openCultureForm(plancheId, cultureId){
+  currentPlancheId = plancheId;
+  currentCultureId = cultureId || null;
+  const planche = DB.planches.find(p=>p.id===plancheId);
+  // fill rang options
+  const rangSelect = document.getElementById('cu-rang');
+  rangSelect.innerHTML = '';
+  for(let r=1; r<=planche.nbRangs; r++){
+    rangSelect.innerHTML += `<option value="${r}">Rang ${r}</option>`;
+  }
+  document.getElementById('cu-delete-btn').style.display = cultureId ? 'inline-block' : 'none';
+
+  if(cultureId){
+    const c = planche.cultures.find(x=>x.id===cultureId);
+    document.getElementById('modal-culture-title').textContent = 'Modifier culture';
+    document.getElementById('cu-famille').value = c.famille;
+    document.getElementById('cu-espece').value = c.espece || '';
+    document.getElementById('cu-variete').value = c.variete || '';
+    document.getElementById('cu-composition').value = c.composition || '';
+    document.getElementById('cu-rang').value = c.rang || 1;
+    document.getElementById('cu-densite').value = c.densite || '';
+    document.getElementById('cu-date-plantation').value = c.datePlantation || '';
+    document.getElementById('cu-date-recolte').value = c.dateRecolte || '';
+    document.getElementById('cu-precedent').value = c.precedent || '';
+  } else {
+    document.getElementById('modal-culture-title').textContent = 'Nouvelle culture';
+    document.getElementById('cu-famille').value = 'solanacee';
+    document.getElementById('cu-espece').value = '';
+    document.getElementById('cu-variete').value = '';
+    document.getElementById('cu-composition').value = '';
+    document.getElementById('cu-rang').value = 1;
+    document.getElementById('cu-densite').value = '';
+    document.getElementById('cu-date-plantation').value = '';
+    document.getElementById('cu-date-recolte').value = '';
+    document.getElementById('cu-precedent').value = '';
+  }
+  onFamilleChange();
+  openModal('modal-culture');
+}
+function onFamilleChange(){
+  const fam = document.getElementById('cu-famille').value;
+  document.getElementById('cu-composition-group').style.display = fam==='couvert' ? 'block' : 'none';
+}
+function saveCulture(){
+  const planche = DB.planches.find(p=>p.id===currentPlancheId);
+  const data = {
+    famille: document.getElementById('cu-famille').value,
+    espece: document.getElementById('cu-espece').value.trim(),
+    variete: document.getElementById('cu-variete').value.trim(),
+    composition: document.getElementById('cu-composition').value.trim(),
+    rang: parseInt(document.getElementById('cu-rang').value),
+    densite: document.getElementById('cu-densite').value.trim(),
+    datePlantation: document.getElementById('cu-date-plantation').value,
+    dateRecolte: document.getElementById('cu-date-recolte').value,
+    precedent: document.getElementById('cu-precedent').value.trim()
+  };
+  if(currentCultureId){
+    const c = planche.cultures.find(x=>x.id===currentCultureId);
+    Object.assign(c, data);
+  } else {
+    data.id = uid('cu');
+    planche.cultures.push(data);
+  }
+  saveDB();
+  closeModal('modal-culture');
+  renderParcellaire();
+}
+function deleteCulture(){
+  const planche = DB.planches.find(p=>p.id===currentPlancheId);
+  planche.cultures = planche.cultures.filter(c=>c.id!==currentCultureId);
+  saveDB();
+  closeModal('modal-culture');
+  renderParcellaire();
+}
+
+/* ===================================================================
+   ROTATION
+=================================================================== */
+function renderRotationYearOptions(){
+  const startSel = document.getElementById('rotation-year-start');
+  const currentVal = startSel.value;
+  startSel.innerHTML = '';
+  const now = new Date().getFullYear();
+  for(let y = now-3; y<=now+3; y++){
+    startSel.innerHTML += `<option value="${y}" ${y===now?'selected':''}>${y}</option>`;
+  }
+  if(currentVal) startSel.value = currentVal;
+}
+
+function renderRotation(){
+  renderRotationYearOptions();
+  const startYear = parseInt(document.getElementById('rotation-year-start').value);
+  const count = parseInt(document.getElementById('rotation-year-count').value);
+  const years = [];
+  for(let i=0;i<count;i++) years.push(startYear+i);
+
+  const table = document.getElementById('rotation-table');
+  let html = '<tr><th>Planche</th>' + years.map(y=>`<th>${y}</th>`).join('') + '</tr>';
+
+  DB.planches.forEach(planche=>{
+    html += `<tr><td style="text-align:left;font-weight:bold;">${planche.nom}</td>`;
+    years.forEach(y=>{
+      // cultures actives cette année sur cette planche (via dates)
+      const culturesYear = planche.cultures.filter(c=>{
+        if(!c.datePlantation) return false;
+        const py = new Date(c.datePlantation).getFullYear();
+        const ry = c.dateRecolte ? new Date(c.dateRecolte).getFullYear() : py;
+        return y>=py && y<=ry;
+      });
+      let cellHtml = '';
+      if(culturesYear.length===0){
+        cellHtml = '<span style="color:#ccc;">-</span>';
+      } else {
+        culturesYear.forEach(c=>{
+          const label = c.famille==='couvert' ? ('Couvert: '+(c.composition||c.espece||'')) : (c.espece||FAMILLES[c.famille]?.label);
+          cellHtml += `<div class="cell-culture" style="background:${famColor(c.famille)}">${label}${c.rang && planche.nbRangs>1 ? ' (R'+c.rang+')' : ''}</div>`;
+        });
+      }
+      html += `<td>${cellHtml}</td>`;
+    });
+    html += '</tr>';
+  });
+  table.innerHTML = html;
+}
+
+/* ===================================================================
+   RECOLTE
+=================================================================== */
+let currentRecolteId = null;
+
+function fillPlancheOptionsRecolte(){
+  const sel = document.getElementById('re-planche');
+  sel.innerHTML = DB.planches.map(p=>`<option value="${p.id}">${p.nom}</option>`).join('');
+}
+function fillCultureOptions(){
+  const plancheId = document.getElementById('re-planche').value;
+  const planche = DB.planches.find(p=>p.id===plancheId);
+  const sel = document.getElementById('re-culture');
+  if(!planche || !planche.cultures.length){
+    sel.innerHTML = '<option value="">(aucune culture)</option>';
+    return;
+  }
+  sel.innerHTML = planche.cultures.map(c=>
+    `<option value="${c.id}">${c.espece||FAMILLES[c.famille]?.label}${c.variete?' - '+c.variete:''}</option>`
+  ).join('');
+}
+
+function openRecolteForm(id){
+  currentRecolteId = id || null;
+  fillPlancheOptionsRecolte();
+  document.getElementById('re-delete-btn').style.display = id ? 'inline-block':'none';
+  if(id){
+    const r = DB.recoltes.find(x=>x.id===id);
+    document.getElementById('re-planche').value = r.plancheId;
+    fillCultureOptions();
+    document.getElementById('re-culture').value = r.cultureId;
+    document.getElementById('re-date').value = r.date;
+    document.getElementById('re-qte').value = r.quantite;
+  } else {
+    fillCultureOptions();
+    document.getElementById('re-date').value = new Date().toISOString().slice(0,10);
+    document.getElementById('re-qte').value = '';
+  }
+  openModal('modal-recolte');
+}
+function saveRecolte(){
+  const plancheId = document.getElementById('re-planche').value;
+  const cultureId = document.getElementById('re-culture').value;
+  const date = document.getElementById('re-date').value;
+  const quantite = parseFloat(document.getElementById('re-qte').value) || 0;
+  if(currentRecolteId){
+    const r = DB.recoltes.find(x=>x.id===currentRecolteId);
+    Object.assign(r, {plancheId, cultureId, date, quantite});
+  } else {
+    DB.recoltes.push({id: uid('re'), plancheId, cultureId, date, quantite});
+  }
+  saveDB();
+  closeModal('modal-recolte');
+  renderRecoltes();
+}
+function deleteRecolte(){
+  DB.recoltes = DB.recoltes.filter(r=>r.id!==currentRecolteId);
+  saveDB();
+  closeModal('modal-recolte');
+  renderRecoltes();
+}
+
+function getCultureInfo(plancheId, cultureId){
+  const planche = DB.planches.find(p=>p.id===plancheId);
+  if(!planche) return null;
+  const culture = planche.cultures.find(c=>c.id===cultureId);
+  return {planche, culture};
+}
+
+function renderRecolteFilterOptions(){
+  const sel = document.getElementById('recolte-filter');
+  const years = new Set(DB.recoltes.map(r=>new Date(r.date).getFullYear()));
+  const currentVal = sel.value;
+  sel.innerHTML = '<option value="all">Toutes les années</option>' +
+    Array.from(years).sort().map(y=>`<option value="${y}">${y}</option>`).join('');
+  if(currentVal) sel.value = currentVal;
+}
+
+function renderRecoltes(){
+  renderRecolteFilterOptions();
+  const filterYear = document.getElementById('recolte-filter').value;
+  const list = document.getElementById('recoltes-list');
+  list.innerHTML = '';
+  let filtered = DB.recoltes.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(filterYear!=='all'){
+    filtered = filtered.filter(r=>new Date(r.date).getFullYear()==filterYear);
+  }
+  if(filtered.length===0){
+    list.innerHTML = '<div style="color:#999;font-size:0.85rem;">Aucune récolte enregistrée</div>';
+    return;
+  }
+  filtered.forEach(r=>{
+    const info = getCultureInfo(r.plancheId, r.cultureId);
+    const div = document.createElement('div');
+    div.className = 'recolte-item';
+    div.onclick = ()=>openRecolteForm(r.id);
+    const label = info?.culture ? (info.culture.espece||FAMILLES[info.culture.famille]?.label) : '(culture supprimée)';
+    div.innerHTML = `
+      <div class="info">
+        <strong>${label}</strong><br>
+        <span style="color:#777;font-size:0.75rem;">${info?.planche?.nom||''} • ${new Date(r.date).toLocaleDateString('fr-FR')}</span>
+      </div>
+      <div style="font-weight:bold;color:var(--accent);">${r.quantite} kg</div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+/* ===================================================================
+   TECHNICO-ECO
+=================================================================== */
+let rendementMode = 'culture';
+function setRendementMode(mode){
+  rendementMode = mode;
+  document.getElementById('mode-culture').classList.toggle('active', mode==='culture');
+  document.getElementById('mode-planche').classList.toggle('active', mode==='planche');
+  renderTechnico();
+}
+
+function renderTechnicoYearOptions(){
+  const sel = document.getElementById('technico-year');
+  const years = getAllYears();
+  const currentVal = sel.value;
+  sel.innerHTML = '<option value="all">Toutes années</option>' + years.map(y=>`<option value="${y}">${y}</option>`).join('');
+  if(currentVal) sel.value = currentVal;
+}
+
+function computeSurfacePerCulture(planche, culture){
+  const largeurRang = planche.largeur / planche.nbRangs;
+  return planche.longueur * largeurRang;
+}
+
+function renderTechnico(){
+  renderTechnicoYearOptions();
+  const yearFilter = document.getElementById('technico-year').value;
+
+  let recoltes = DB.recoltes.slice();
+  if(yearFilter && yearFilter!=='all'){
+    recoltes = recoltes.filter(r=>new Date(r.date).getFullYear()==yearFilter);
+  }
+
+  const agro = document.getElementById('agronomie-list');
+  agro.innerHTML = '';
+
+  let aggregated = {}; // key => {label, qty, surface, famille}
+
+  if(rendementMode==='culture'){
+    recoltes.forEach(r=>{
+      const info = getCultureInfo(r.plancheId, r.cultureId);
+      if(!info || !info.culture) return;
+      const key = (info.culture.espece||FAMILLES[info.culture.famille]?.label||'?') + '||' + (info.culture.variete||'');
+      if(!aggregated[key]){
+        aggregated[key] = {
+          label: (info.culture.espece||FAMILLES[info.culture.famille]?.label) + (info.culture.variete?(' - '+info.culture.variete):''),
+          qty:0,
+          surfaceSet: new Set(),
+          surface:0,
+          famille: info.culture.famille,
+          espece: info.culture.espece || FAMILLES[info.culture.famille]?.label
+        };
+      }
+      aggregated[key].qty += r.quantite;
+      const surf = computeSurfacePerCulture(info.planche, info.culture);
+      const instanceKey = info.planche.id+'_'+info.culture.id;
+      if(!aggregated[key].surfaceSet.has(instanceKey)){
+        aggregated[key].surfaceSet.add(instanceKey);
+        aggregated[key].surface += surf;
+      }
+    });
+  } else {
+    // par planche : chaque culture de chaque planche traitée séparément
+    recoltes.forEach(r=>{
+      const info = getCultureInfo(r.plancheId, r.cultureId);
+      if(!info || !info.culture) return;
+      const key = info.planche.id + '||' + info.culture.id;
+      if(!aggregated[key]){
+        aggregated[key] = {
+          label: info.planche.nom + ' — ' + (info.culture.espece||FAMILLES[info.culture.famille]?.label) + (info.culture.variete?(' - '+info.culture.variete):''),
+          qty:0,
+          surface: computeSurfacePerCulture(info.planche, info.culture),
+          famille: info.culture.famille,
+          espece: info.culture.espece || FAMILLES[info.culture.famille]?.label
+        };
+      }
+      aggregated[key].qty += r.quantite;
+    });
+  }
+
+  const keys = Object.keys(aggregated);
+  if(keys.length===0){
+    agro.innerHTML = '<div style="color:#999;font-size:0.85rem;">Aucune donnée de récolte pour cette période</div>';
+  } else {
+    keys.forEach(k=>{
+      const item = aggregated[k];
+      const rendement = item.surface>0 ? (item.qty/item.surface).toFixed(2) : '0.00';
+      const div = document.createElement('div');
+      div.className = 'stat-card';
+      div.innerHTML = `
+        <div class="stat-row">
+          <strong style="color:${famColor(item.famille)}">${item.label}</strong>
+          <span>${item.qty.toFixed(1)} kg</span>
+        </div>
+        <div class="stat-row">
+          <span>Surface: ${item.surface.toFixed(2)} m²</span>
+          <span><strong>${rendement} kg/m²</strong></span>
+        </div>
+      `;
+      agro.appendChild(div);
+    });
+  }
+
+  // ===== ECONOMIQUE =====
+  renderPrixList();
+  const ecoList = document.getElementById('economique-list');
+  ecoList.innerHTML = '';
+  let totalValeur = 0;
+  let totalSurface = 0;
+
+  // Pour l'économique, on agrège toujours PAR CULTURE (espèce) peu importe le mode,
+  // car le prix se définit par culture, pas par planche.
+  const ecoMap = {};
+  recoltes.forEach(r=>{
+    const info = getCultureInfo(r.plancheId, r.cultureId);
+    if(!info || !info.culture) return;
+    const espece = info.culture.espece || FAMILLES[info.culture.famille]?.label || '?';
+    const key = espece.toLowerCase();
+    if(!ecoMap[key]){
+      ecoMap[key] = {label: espece, qty:0, surfaceSet:new Set(), surface:0, famille: info.culture.famille};
+    }
+    ecoMap[key].qty += r.quantite;
+    const surf = computeSurfacePerCulture(info.planche, info.culture);
+    const instanceKey = info.planche.id+'_'+info.culture.id;
+    if(!ecoMap[key].surfaceSet.has(instanceKey)){
+      ecoMap[key].surfaceSet.add(instanceKey);
+      ecoMap[key].surface += surf;
+    }
+  });
+
+  const ecoKeys = Object.keys(ecoMap);
+  if(ecoKeys.length===0){
+    ecoList.innerHTML = '<div style="color:#999;font-size:0.85rem;">Aucune donnée</div>';
+  } else {
+    ecoKeys.forEach(k=>{
+      const item = ecoMap[k];
+      const prix = DB.prix[k] || 0;
+      const valeur = item.qty * prix;
+      totalValeur += valeur;
+      totalSurface += item.surface;
+      const rendementEco = item.surface>0 ? (valeur/item.surface).toFixed(2) : '0.00';
+      const div = document.createElement('div');
+      div.className = 'stat-card';
+      div.innerHTML = `
+        <div class="stat-row">
+          <strong style="color:${famColor(item.famille)}">${item.label}</strong>
+          <span>${valeur.toFixed(2)} €</span>
+        </div>
+        <div class="stat-row">
+          <span>${item.qty.toFixed(1)} kg × ${prix.toFixed(2)} €/kg</span>
+          <span><strong>${rendementEco} €/m²</strong></span>
+        </div>
+      `;
+      ecoList.appendChild(div);
+    });
+  }
+
+  const totalDiv = document.getElementById('economique-total');
+  const rendementGlobal = totalSurface>0 ? (totalValeur/totalSurface).toFixed(2) : '0.00';
+  totalDiv.innerHTML = `
+    <div class="stat-row"><strong>Valeur totale</strong><strong>${totalValeur.toFixed(2)} €</strong></div>
+    <div class="stat-row"><span>Rendement économique global</span><strong>${rendementGlobal} €/m²</strong></div>
+  `;
+}
+
+function renderPrixList(){
+  const container = document.getElementById('prix-list');
+  // liste des espèces distinctes présentes dans les cultures
+  const especes = new Set();
+  DB.planches.forEach(p=>p.cultures.forEach(c=>{
+    const nom = c.espece || FAMILLES[c.famille]?.label;
+    if(nom) especes.add(nom);
+  }));
+  container.innerHTML = '';
+  if(especes.size===0){
+    container.innerHTML = '<div style="color:#999;font-size:0.8rem;">Aucune culture définie</div>';
+    return;
+  }
+  Array.from(especes).sort().forEach(nom=>{
+    const key = nom.toLowerCase();
+    const div = document.createElement('div');
+    div.className = 'prix-row';
+    div.innerHTML = `
+      <label>${nom}</label>
+      <input type="number" step="0.01" value="${DB.prix[key]||''}" placeholder="0.00"
+        onchange="updatePrix('${key}', this.value)">
+    `;
+    container.appendChild(div);
+  });
+}
+function updatePrix(key, value){
+  DB.prix[key] = parseFloat(value) || 0;
+  saveDB();
+  renderTechnico();
+}
+
+/* ===================================================================
+   PLANNING
+=================================================================== */
+let selectedPaintCulture = null; // {famille, color, label} or null (eraser)
+let planningActivePlancheIds = null; // null = all planches
+
+function renderPlanningYearOptions(){
+  const sel = document.getElementById('planning-year');
+  const currentVal = sel.value;
+  const years = getAllYears();
+  sel.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join('');
+  if(currentVal && years.includes(parseInt(currentVal))) sel.value = currentVal;
+  else sel.value = new Date().getFullYear();
+}
+
+function getPaintOptions(){
+  // build list of distinct cultures across all planches (unique by famille+espece+variete)
+  const map = {};
+  DB.planches.forEach(p=>p.cultures.forEach(c=>{
+    const key = c.famille+'||'+(c.espece||'')+'||'+(c.variete||'');
+    if(!map[key]){
+      map[key] = {
+        famille: c.famille,
+        espece: c.espece,
+        variete: c.variete,
+        label: (c.espece||FAMILLES[c.famille]?.label||'?').slice(0,3).toUpperCase(),
+        color: famColor(c.famille)
+      };
+    }
+  }));
+  return Object.values(map);
+}
+
+function renderPaintPalette(){
+  const palette = document.getElementById('paint-palette');
+  palette.innerHTML = '';
+  // Eraser / terre nue
+  const eraser = document.createElement('div');
+  eraser.className = 'paint-swatch eraser' + (selectedPaintCulture===null ? ' selected':'');
+  eraser.textContent = '⌫';
+  eraser.title = 'Terre nue';
+  eraser.onclick = ()=>{ selectedPaintCulture=null; renderPaintPalette(); };
+  palette.appendChild(eraser);
+
+  const options = getPaintOptions();
+  options.forEach(opt=>{
+    const sw = document.createElement('div');
+    sw.className = 'paint-swatch';
+    sw.style.background = opt.color;
+    sw.textContent = opt.label;
+    sw.title = (opt.espece||FAMILLES[opt.famille]?.label) + (opt.variete?(' - '+opt.variete):'');
+    const isSelected = selectedPaintCulture &&
+      selectedPaintCulture.famille===opt.famille &&
+      selectedPaintCulture.espece===opt.espece &&
+      selectedPaintCulture.variete===opt.variete;
+    if(isSelected) sw.classList.add('selected');
+    sw.onclick = ()=>{ selectedPaintCulture = opt; renderPaintPalette(); };
+    palette.appendChild(sw);
+  });
+
+  if(options.length===0){
+    const hint = document.createElement('div');
+    hint.style.fontSize='0.75rem';
+    hint.style.color='#999';
+    hint.textContent = 'Ajoutez des cultures dans l\'onglet Parcellaire pour les peindre ici.';
+    palette.appendChild(hint);
+  }
+}
+
+function renderPlanningLegend(){
+  const legend = document.getElementById('planning-legend');
+  legend.innerHTML = Object.entries(FAMILLES).map(([key,f])=>
+    `<span><i style="background:${f.color}"></i>${f.label}</span>`
+  ).join('') + `<span><i style="background:white;border:1px solid #ccc;"></i>Terre nue</span>`;
+}
+
+function renderPlanning(){
+  renderPlanningYearOptions();
+  renderPaintPalette();
+  renderPlanningLegend();
+  const year = parseInt(document.getElementById('planning-year').value) || new Date().getFullYear();
+
+  const planches = planningActivePlancheIds
+    ? DB.planches.filter(p=>planningActivePlancheIds.includes(p.id))
+    : DB.planches;
+
+  const wrap = document.getElementById('planning-grid-wrap');
+  let html = '<table class="planning"><thead><tr><th class="corner">Semaine</th>';
+  planches.forEach(p=>{
+    html += `<th>${p.nom}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  for(let week=1; week<=52; week++){
+    const start = isoWeekToDate(year, week);
+    const end = new Date(start); end.setDate(start.getDate()+6);
+    html += `<tr><td class="week-label">S${week}<br>${fmtDate(start)}-${fmtDate(end)}</td>`;
+    planches.forEach(p=>{
+      const cellKey = p.id+'_'+year+'_'+week;
+      const cellData = DB.planning[cellKey];
+      let bg = 'white';
+      let workHtml = '';
+      if(cellData){
+        if(cellData.color) bg = cellData.color;
+        if(cellData.travaux && cellData.travaux.length){
+          workHtml = cellData.travaux.map(t=>
+            `<span class="work-label ${t.statut}">${t.code}</span>`
+          ).join('<span style="font-size:0.55rem;">+</span>');
+        }
+      }
+      html += `<td class="cell" style="background:${bg}" onclick="onCellTap('${p.id}',${year},${week})" oncontextmenu="event.preventDefault();openPlanningCellModal('${p.id}',${year},${week});return false;">${workHtml}</td>`;
+    });
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+
+  attachLongPress();
+}
+
+let longPressTimer = null;
+let longPressTriggered = false;
+function attachLongPress(){
+  document.querySelectorAll('table.planning td.cell').forEach(td=>{
+    td.addEventListener('touchstart', e=>{
+      longPressTriggered = false;
+      longPressTimer = setTimeout(()=>{
+        longPressTriggered = true;
+        td.dispatchEvent(new Event('longpress'));
+      }, 480);
+    });
+    td.addEventListener('touchend', ()=>{ clearTimeout(longPressTimer); });
+    td.addEventListener('touchmove', ()=>{ clearTimeout(longPressTimer); });
+  });
+}
+
+function onCellTap(plancheId, year, week){
+  if(longPressTriggered){ longPressTriggered=false; return; }
+  // mode peinture : appliquer/effacer la couleur de culture
+  const cellKey = plancheId+'_'+year+'_'+week;
+  if(!DB.planning[cellKey]){
+    DB.planning[cellKey] = {plancheId, annee:year, semaine:week, travaux:[], color:null};
+  }
+  if(selectedPaintCulture===null){
+    DB.planning[cellKey].color = null;
+  } else {
+    DB.planning[cellKey].color = selectedPaintCulture.color;
+  }
+  saveDB();
+  renderPlanning();
+}
+
+let planningCellContext = null;
+function openPlanningCellModal(plancheId, year, week){
+  planningCellContext = {plancheId, year, week};
+  const planche = DB.planches.find(p=>p.id===plancheId);
+  document.getElementById('pc-title').textContent = `${planche.nom} — Semaine ${week} (${year})`;
+
+  const cellKey = plancheId+'_'+year+'_'+week;
+  const cellData = DB.planning[cellKey] || {travaux:[]};
+
+  const list = document.getElementById('pc-travaux-list');
+  list.innerHTML = '';
+  Object.entries(TRAVAUX).forEach(([code,label])=>{
+    const checked = cellData.travaux.some(t=>t.code===code);
+    list.innerHTML += `
+      <label>
+        <input type="checkbox" value="${code}" ${checked?'checked':''} onchange="limitTravauxSelection(this)">
+        ${code} - ${label}
+      </label>
+    `;
+  });
+
+  const statut = cellData.travaux.length ? cellData.travaux[0].statut : 'planifie';
+  document.getElementById('pc-statut').value = statut;
+
+  openModal('modal-planning-cell');
+}
+
+function limitTravauxSelection(checkbox){
+  const checkedBoxes = document.querySelectorAll('#pc-travaux-list input:checked');
+  if(checkedBoxes.length > 2){
+    checkbox.checked = false;
+    alert('Maximum 2 travaux par semaine');
+  }
+}
+
+function savePlanningCellWork(){
+  const {plancheId, year, week} = planningCellContext;
+  const cellKey = plancheId+'_'+year+'_'+week;
+  const checkedBoxes = Array.from(document.querySelectorAll('#pc-travaux-list input:checked'));
+  const statut = document.getElementById('pc-statut').value;
+
+  if(!DB.planning[cellKey]){
+    DB.planning[cellKey] = {plancheId, annee:year, semaine:week, travaux:[], color:null};
+  }
+  DB.planning[cellKey].travaux = checkedBoxes.map(cb=>({code:cb.value, statut}));
+
+  saveDB();
+  closeModal('modal-planning-cell');
+  renderPlanning();
+}
+
+function managePlanches(){
+  const list = document.getElementById('manage-planches-list');
+  list.innerHTML = DB.planches.map(p=>{
+    const isActive = planningActivePlancheIds===null || planningActivePlancheIds.includes(p.id);
+    return `<label><input type="checkbox" value="${p.id}" ${isActive?'checked':''} onchange="togglePlancheActive('${p.id}',this.checked)"> ${p.nom}</label>`;
+  }).join('');
+  openModal('modal-manage-planches');
+}
+function togglePlancheActive(id, checked){
+  if(planningActivePlancheIds===null){
+    planningActivePlancheIds = DB.planches.map(p=>p.id);
+  }
+  if(checked){
+    if(!planningActivePlancheIds.includes(id)) planningActivePlancheIds.push(id);
+  } else {
+    planningActivePlancheIds = planningActivePlancheIds.filter(x=>x!==id);
+  }
+  renderPlanning();
+}
+
+/* ===================================================================
+   RENDER ALL / INIT
+=================================================================== */
+function renderAll(){
+  renderParcellaire();
+  renderRotation();
+  renderRecoltes();
+  renderTechnico();
+  renderPlanning();
+}
+
+loadDB();
+renderAll();
+
+// Auto-save périodique
+setInterval(saveDB, 15000);
+window.addEventListener('beforeunload', saveDB);
+</script>
+<script>
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+}
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"8607d2a720d14b038279025b2b5a82e5"}' crossorigin="anonymous"></script>
+</body>
+</html>
